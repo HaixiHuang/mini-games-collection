@@ -89,8 +89,21 @@ GameRegistry.register({
             &nbsp;|&nbsp; 已归位: <b style="color:#27ae60;">${countCorrect()}</b>/${total - 1}
           </div>
           <div style="display:inline-block;" id="puzzleGrid">${html}</div>
-          <div style="margin-top:16px;color:var(--text-dim);font-size:0.85em;">
-            点击空白格旁边的方块来移动 | R 重置
+          <div style="margin-top:16px;">
+            <div style="display:grid;grid-template-columns:50px 50px 50px;grid-template-rows:50px 50px 50px;gap:3px;justify-content:center;">
+              <div></div>
+              <button class="game-cell" id="btnUp" style="width:50px;height:50px;font-size:1.3em;">⬆</button>
+              <div></div>
+              <button class="game-cell" id="btnLeft" style="width:50px;height:50px;font-size:1.3em;">⬅</button>
+              <button class="game-cell" id="btnReset" style="width:50px;height:50px;font-size:0.7em;">🔄</button>
+              <button class="game-cell" id="btnRight" style="width:50px;height:50px;font-size:1.3em;">➡</button>
+              <div></div>
+              <button class="game-cell" id="btnDown" style="width:50px;height:50px;font-size:1.3em;">⬇</button>
+              <div></div>
+            </div>
+          </div>
+          <div style="margin-top:8px;color:var(--text-dim);font-size:0.8em;">
+            点击方块 / 方向键 / D-pad | R 重置
           </div>
         </div>
       `;
@@ -100,19 +113,30 @@ GameRegistry.register({
         if (!cell) return;
         const r = +cell.dataset.r, c = +cell.dataset.c;
         if (!isAdjacent(r, c)) return;
-        swap(r, c);
-        moves++;
-        render();
-
-        if (isSolved()) {
-          const elapsed = Math.round((Date.now() - startTime) / 1000);
-          setTimeout(() => onComplete({
-            win: true, score: moves, time: elapsed,
-            title: '🎉 拼图完成！',
-            detail: `共 ${moves} 步，用时 ${fmtTime(elapsed)}`,
-          }), 400);
-        }
+        doSwap(r, c);
       };
+
+      // D-pad buttons
+      document.getElementById('btnUp').onclick = () => { doSwap(emptyR+1, emptyC); };
+      document.getElementById('btnDown').onclick = () => { doSwap(emptyR-1, emptyC); };
+      document.getElementById('btnLeft').onclick = () => { doSwap(emptyR, emptyC+1); };
+      document.getElementById('btnRight').onclick = () => { doSwap(emptyR, emptyC-1); };
+      document.getElementById('btnReset').onclick = () => { reset(); render(); };
+    }
+
+    function doSwap(r, c) {
+      if (r < 0 || r >= size || c < 0 || c >= size) return;
+      swap(r, c);
+      moves++;
+      render();
+      if (isSolved()) {
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        setTimeout(() => onComplete({
+          win: true, score: moves, time: elapsed,
+          title: '🎉 拼图完成！',
+          detail: `共 ${moves} 步，用时 ${fmtTime(elapsed)}`,
+        }), 400);
+      }
     }
 
     function countCorrect() {
@@ -132,22 +156,9 @@ GameRegistry.register({
       const dirMap = { ArrowUp: [1,0], ArrowDown: [-1,0], ArrowLeft: [0,1], ArrowRight: [0,-1],
                        w: [1,0], W: [1,0], s: [-1,0], S: [-1,0], a: [0,1], A: [0,1], d: [0,-1], D: [0,-1] };
       const [dr, dc] = dirMap[e.key] || [];
-      if (dr === undefined) return;
+      if (!dr && dr !== 0) return;
       e.preventDefault();
-      const nr = emptyR + dr, nc = emptyC + dc;
-      if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
-        swap(nr, nc);
-        moves++;
-        render();
-        if (isSolved()) {
-          const elapsed = Math.round((Date.now() - startTime) / 1000);
-          setTimeout(() => onComplete({
-            win: true, score: moves, time: elapsed,
-            title: '🎉 拼图完成！',
-            detail: `共 ${moves} 步，用时 ${fmtTime(elapsed)}`,
-          }), 400);
-        }
-      }
+      doSwap(emptyR + dr, emptyC + dc);
     }
 
     document.addEventListener('keydown', onKey);
