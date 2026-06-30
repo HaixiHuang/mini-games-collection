@@ -16,7 +16,34 @@
 
 在线版：[https://haixihuang.github.io/mini-games-collection/](https://haixihuang.github.io/mini-games-collection/)
 
-## 游戏列表（8个）
+## 部署到 GitHub Pages（免费，永久在线）
+
+```bash
+# 1. Fork 或创建新仓库
+#    GitHub → New Repository → 取名 mini-games-collection
+
+# 2. 克隆并放入代码
+git clone https://github.com/你的用户名/mini-games-collection.git
+cd mini-games-collection
+# 把所有文件复制到这个目录
+
+# 3. 推送
+git add -A
+git commit -m "🎮 迷你游戏集合"
+git push
+
+# 4. 启用 Pages
+#    GitHub → 仓库 Settings → Pages →
+#    Source: Deploy from a branch → master → /(root) → Save
+
+# 5. 等待 1-2 分钟，访问
+#    https://你的用户名.github.io/mini-games-collection/
+```
+
+> ⚠️ 注意：GitHub Pages 服务器是 Linux，区分大小写。
+> 确保 `common/` 目录全是小写，否则 CSS/JS 加载失败。
+
+## 游戏列表（9个）
 
 | 游戏 | 说明 | 难度 |
 |------|------|------|
