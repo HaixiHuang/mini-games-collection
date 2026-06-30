@@ -1,0 +1,2 @@
+::claude -n L33Claude --dangerously-skip-permissions --model deepseek-v4-pro[1m] --effort max
+wt -w new new-tab --startingDirectory . cmd /c "claude -n L33Claude --dangerously-skip-permissions --model deepseek-v4-pro[1m] --effort max"
