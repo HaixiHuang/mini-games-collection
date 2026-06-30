@@ -74,18 +74,21 @@ GameRegistry.register({
       const prevCleanup = container._cleanup;
       container._cleanup = () => { clearInterval(skipTimer); if (prevCleanup) prevCleanup(); };
       function allFilled() { return Array.from(container.querySelectorAll('.blank-cell')).every(b => b.value.trim()); }
+      function findNextBlank(el) { let s = el.nextElementSibling; while (s) { if (s.classList.contains('blank-cell')) return s; s = s.nextElementSibling; } return null; }
+      function findPrevBlank(el) { let s = el.previousElementSibling; while (s) { if (s.classList.contains('blank-cell')) return s; s = s.previousElementSibling; } return null; }
+
       container.querySelector('#cellRow').oninput = (e) => {
         const inp = e.target;
         if (!inp.classList.contains('blank-cell')) return;
         if (inp.value.length > 1) inp.value = inp.value[inp.value.length - 1];
-        if (inp.value) { const next = inp.nextElementSibling; if (next && next.classList.contains('blank-cell')) next.focus(); else if (allFilled()) handleSpell(true); }
+        if (inp.value) { const next = findNextBlank(inp); if (next) next.focus(); else if (allFilled()) handleSpell(true); }
       };
       container.querySelector('#cellRow').onkeydown = (e) => {
         const inp = e.target;
         if (!inp.classList.contains('blank-cell')) return;
-        if (e.key === 'Backspace' && !inp.value) { e.preventDefault(); const prev = inp.previousElementSibling; if (prev && prev.classList.contains('blank-cell')) { prev.focus(); prev.value = ''; } }
-        else if (e.key === 'ArrowLeft') { e.preventDefault(); const prev = inp.previousElementSibling; if (prev && prev.classList.contains('blank-cell')) prev.focus(); }
-        else if (e.key === 'ArrowRight') { e.preventDefault(); const next = inp.nextElementSibling; if (next && next.classList.contains('blank-cell')) next.focus(); }
+        if (e.key === 'Backspace' && !inp.value) { e.preventDefault(); const prev = findPrevBlank(inp); if (prev) { prev.focus(); prev.value = ''; } }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); const prev = findPrevBlank(inp); if (prev) prev.focus(); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); const next = findNextBlank(inp); if (next) next.focus(); }
         else if (e.key === 'Enter') handleSpell(false);
       };
       document.getElementById('btnSubmit').onclick = () => handleSpell(false);
@@ -198,7 +201,7 @@ GameRegistry.register({
 
     function loadSettings() {
       const raw = localStorage.getItem(SETTINGS_KEY);
-      return raw ? JSON.parse(raw) : { dailyNew: 15, maxReview: 30, secondsPerWord: 4 };
+      return raw ? JSON.parse(raw) : { dailyNew: 50, maxReview: 50, secondsPerWord: 10 };
     }
     function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
     function loadProgress() {
@@ -273,9 +276,9 @@ GameRegistry.register({
         <div style="background:var(--surface);padding:16px;border-radius:var(--radius);margin-bottom:16px;">
           <div style="font-weight:700;margin-bottom:12px;">⚙️ 学习计划</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.9em;">
-            <div>每日新词: <b id="setNew">${settings.dailyNew}</b>个 <input type="range" id="rangeNew" min="5" max="50" value="${settings.dailyNew}" style="width:80px;vertical-align:middle;"></div>
-            <div>最大复习: <b id="setReview">${settings.maxReview}</b>个 <input type="range" id="rangeReview" min="10" max="80" value="${settings.maxReview}" style="width:80px;vertical-align:middle;"></div>
-            <div>展示时间: <b id="setSec">${settings.secondsPerWord}</b>秒 <input type="range" id="rangeSec" min="2" max="10" value="${settings.secondsPerWord}" style="width:80px;vertical-align:middle;"></div>
+            <div>每日新词: <b id="setNew">${settings.dailyNew}</b>个 <input type="range" id="rangeNew" min="5" max="100" value="${settings.dailyNew}" style="width:80px;vertical-align:middle;"></div>
+            <div>最大复习: <b id="setReview">${settings.maxReview}</b>个 <input type="range" id="rangeReview" min="10" max="100" value="${settings.maxReview}" style="width:80px;vertical-align:middle;"></div>
+            <div>展示时间: <b id="setSec">${settings.secondsPerWord}</b>秒 <input type="range" id="rangeSec" min="2" max="20" value="${settings.secondsPerWord}" style="width:80px;vertical-align:middle;"></div>
           </div>
         </div>
 

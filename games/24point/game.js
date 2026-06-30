@@ -17,7 +17,8 @@ GameRegistry.register({
     do { numbers = Array.from({ length: 4 }, () => randInt(1, range)); }
     while (!solve24(numbers).length);
 
-    let solved = false;
+    let numbers, expr;
+    solved = false;
 
     render();
 
@@ -53,7 +54,7 @@ GameRegistry.register({
       `;
 
       // 表达式构建
-      let expr = '';
+      expr = '';
       const display = document.getElementById('exprDisplay');
 
       function updateDisplay() {

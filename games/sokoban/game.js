@@ -139,14 +139,14 @@ GameRegistry.register({
       if (nr < 0 || nr >= grid.length || nc < 0 || nc >= grid[0].length) return;
 
       const cell = grid[nr][nc];
-      if (cell === '#' || cell === ' ') return;
-      // ponytail: ' ' outside the play area — skip
+      if (cell === '#') return;
+      // ponytail: only walls block movement; all other cells are traversable
 
       if (cell === '$' || cell === '*') {
         const br = nr + dr, bc = nc + dc;
         if (br < 0 || br >= grid.length || bc < 0 || bc >= grid[0].length) return;
         const bcell = grid[br][bc];
-        if (bcell === '#' || bcell === '$' || bcell === '*' || bcell === ' ') return;
+        if (bcell === '#' || bcell === '$' || bcell === '*') return;
 
         grid[br][bc] = isTarget(br, bc) ? '*' : '$';
         grid[nr][nc] = isTarget(nr, nc) ? '+' : '@';
