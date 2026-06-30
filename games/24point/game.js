@@ -25,27 +25,57 @@ GameRegistry.register({
       container.innerHTML = `
         <div style="text-align:center;max-width:420px;width:100%;">
           <div style="font-size:1.1em;color:var(--text-dim);margin-bottom:16px;">
-            使用这四个数字和 + - × ÷ ( ) 运算，使结果等于 <b style="color:var(--accent);">24</b>
+            使用这四个数字和 + − × ÷ ( ) 运算，使结果等于 <b style="color:var(--accent);">24</b>
           </div>
-          <div style="display:flex;gap:16px;justify-content:center;margin-bottom:24px;">
+          <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;">
             ${numbers.map((n, i) => `
-              <div class="game-cell" style="font-size:2em;width:80px;height:80px;cursor:default;border-color:var(--accent);">${n}</div>
+              <button class="game-cell" id="btnNum${i}" style="font-size:1.8em;width:70px;height:70px;border-color:var(--accent);">${n}</button>
             `).join('')}
           </div>
-          <div style="display:flex;gap:8px;margin-bottom:16px;">
-            <input type="text" class="game-input" id="exprInput"
-              placeholder="例如: (3+5)×(8-5)" style="flex:1;font-size:1.2em;text-align:left;" autocomplete="off">
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px;">
+            <div id="exprDisplay" style="flex:1;min-height:44px;padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:1.3em;font-family:monospace;text-align:left;color:var(--text);word-break:break-all;">&nbsp;</div>
             <button class="btn btn-primary" id="btnCheck">验证</button>
           </div>
-          <div id="feedback24"></div>
-          <div style="margin-top:12px;">
-            <button class="btn btn-secondary" id="btnNew24">🔄 换一题</button>
-            <button class="btn btn-secondary" id="btnHint24" style="margin-left:8px;">💡 提示</button>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px;">
+            <button class="btn btn-secondary pad-btn" data-key="(">(</button>
+            <button class="btn btn-secondary pad-btn" data-key=")">)</button>
+            <button class="btn btn-secondary pad-btn" data-key="+">+</button>
+            <button class="btn btn-secondary pad-btn" data-key="-">−</button>
+            <button class="btn btn-secondary pad-btn" data-key="*">×</button>
+            <button class="btn btn-secondary pad-btn" data-key="/">÷</button>
+            <button class="btn btn-secondary pad-btn" id="btnUndo">⌫</button>
+            <button class="btn btn-danger pad-btn" id="btnClear">C</button>
+            <button class="btn btn-secondary" id="btnNew24">🔄</button>
+            <button class="btn btn-secondary" id="btnHint24">💡</button>
           </div>
+          <div id="feedback24"></div>
         </div>
       `;
 
-      document.getElementById('btnCheck').onclick = checkAnswer;
+      // 表达式构建
+      let expr = '';
+      const display = document.getElementById('exprDisplay');
+
+      function updateDisplay() {
+        display.textContent = expr || ' ';
+      }
+
+      // 四个数字按钮
+      numbers.forEach((n, i) => {
+        document.getElementById('btnNum'+i).onclick = () => { expr += n; updateDisplay(); };
+      });
+
+      // 运算符按钮
+      container.querySelectorAll('.pad-btn').forEach(btn => {
+        btn.onclick = () => { expr += btn.dataset.key; updateDisplay(); };
+      });
+
+      // 撤销
+      document.getElementById('btnUndo').onclick = () => { expr = expr.slice(0, -1); updateDisplay(); };
+      // 清除
+      document.getElementById('btnClear').onclick = () => { expr = ''; updateDisplay(); };
+
+      document.getElementById('btnCheck').onclick = () => { if (!solved) checkAnswer(); };
       document.getElementById('btnNew24').onclick = () => {
         do { numbers = Array.from({ length: 4 }, () => randInt(1, range)); }
         while (!solve24(numbers).length);
@@ -53,15 +83,23 @@ GameRegistry.register({
         render();
       };
       document.getElementById('btnHint24').onclick = showHint;
-      const inp = document.getElementById('exprInput');
-      inp.onkeydown = (e) => { if (e.key === 'Enter') checkAnswer(); };
-      inp.focus();
+
+      // 键盘输入支持
+      function onKeyDown(e) {
+        if (solved) return;
+        if (e.key === 'Enter') { e.preventDefault(); checkAnswer(); return; }
+        if (e.key === 'Backspace') { e.preventDefault(); expr = expr.slice(0, -1); updateDisplay(); return; }
+        if (/^\d$/.test(e.key)) { expr += e.key; updateDisplay(); return; }
+        if (['+','-','*','/','(',')'].includes(e.key)) { expr += e.key; updateDisplay(); return; }
+      }
+      document.addEventListener('keydown', onKeyDown);
+      const prevCleanup = container._cleanup;
+      container._cleanup = () => { document.removeEventListener('keydown', onKeyDown); if (prevCleanup) prevCleanup(); };
     }
 
     function checkAnswer() {
       if (solved) return;
-      const expr = document.getElementById('exprInput').value.trim();
-      if (!expr) return;
+      if (!expr.trim()) return;
 
       // 提取表达式中的数字
       const used = expr.match(/\d+/g);
@@ -72,16 +110,15 @@ GameRegistry.register({
         return;
       }
 
-      // 安全检查：只允许数字、运算符、括号、空格
-      if (!/^[\d+\-*/×÷xX()（）.\s]+$/.test(expr)) {
+      // 安全检查
+      if (!/^[\d+\-*/()\s]+$/.test(expr)) {
         document.getElementById('feedback24').innerHTML =
           `<div class="game-feedback info">表达式包含无效字符</div>`;
         return;
       }
 
       try {
-        const normalized = expr.replace(/[×xX]/g, '*').replace(/[÷]/g, '/').replace(/（）/g, (m) => m === '（' ? '(' : ')');
-        const val = new Function(`return (${normalized})`)();
+        const val = new Function(`return (${expr})`)();
         if (Math.abs(val - 24) < 1e-9) {
           solved = true;
           document.getElementById('feedback24').innerHTML =
