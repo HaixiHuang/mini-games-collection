@@ -5,57 +5,62 @@ GameRegistry.register({
   icon: '📦',
   desc: '经典推箱子谜题。把所有箱子推到目标位置！',
   difficulties: [
-    { id: 'easy', name: '简单', icon: '🌱', desc: '小型地图，2个箱子' },
-    { id: 'medium', name: '中等', icon: '🔥', desc: '中型地图，3个箱子' },
-    { id: 'hard', name: '困难', icon: '💀', desc: '大型地图，4个箱子' },
+    { id: 'easy', name: '简单', icon: '🌱', desc: '5×5，1个箱子' },
+    { id: 'medium', name: '中等', icon: '🔥', desc: '6×6，2个箱子' },
+    { id: 'hard', name: '困难', icon: '💀', desc: '7×7，3个箱子' },
   ],
 
   init(container, difficulty, onComplete) {
+    // 经典可解关卡
     const levels = {
       easy: [
-        // 6x6, 2 boxes
-        [
-          '  ####',
-          '###  #',
-          '#  $ #',
-          '# .#@#',
-          '# .  #',
-          '######',
-        ],
-        [
-          '##### ',
-          '#   # ',
-          '# # # ',
-          '# $ # ',
-          '#.@.##',
-          '#. $ #',
-          '######',
-        ],
+        // 1箱，5×5
+        ['#####',
+         '#   #',
+         '# $ #',
+         '# .@#',
+         '#####'],
+        ['#####',
+         '#.  #',
+         '# $ #',
+         '#  @#',
+         '#####'],
+        ['#####',
+         '# @ #',
+         '# $ #',
+         '# . #',
+         '#####'],
       ],
       medium: [
-        // 7x7, 3 boxes
-        [
-          '  #####',
-          '###   #',
-          '#  $# #',
-          '# #.  #',
-          '# .$# #',
-          '##.@  #',
-          ' ######',
-        ],
+        // 2箱，6×6
+        ['######',
+         '#    #',
+         '# #$ #',
+         '# $ .#',
+         '# .@ #',
+         '######'],
+        ['  ####',
+         '###  #',
+         '#  $.#',
+         '#  #@#',
+         '#  $.#',
+         '######'],
       ],
       hard: [
-        // 8x8, 4 boxes
-        [
-          '  ######',
-          '  #    #',
-          '### ## #',
-          '#  $   #',
-          '# .#.$##',
-          '# .$.  #',
-          '# .# @ #',
-          '########',
-        ],
+        // 3箱，7×7
+        ['  #####',
+         '###   #',
+         '#  $$ #',
+         '# #..#',
+         '# .  @#',
+         '#######'],
+        [' #######',
+         ' #  #  #',
+         ' # $  $#',
+         '## .#. #',
+         '#  . @ #',
+         '#  $  ##',
+         '########'],
       ],
     };
 
@@ -75,12 +80,15 @@ GameRegistry.register({
       }
     }
 
+    // 检查原始关卡中该位置是否是目标点（. * +）
     function isTarget(r, c) {
-      return rawLevel[r] && rawLevel[r][c] === '.' || rawLevel[r][c] === '*' || rawLevel[r][c] === '+';
+      if (!rawLevel[r]) return false;
+      const ch = rawLevel[r][c];
+      return ch === '.' || ch === '*' || ch === '+';
     }
 
     function render() {
-      const cellSize = grid.length > 7 ? 58 : grid.length > 6 ? 68 : 78;
+      const cellSize = grid.length > 7 ? 58 : grid.length > 6 ? 65 : 72;
       const symbols = { '#': '🧱', '.': '🎯', '$': '📦', '@': '🧑', '*': '✅', '+': '🧑', ' ': '' };
       const html = grid.map((row, r) =>
         `<div style="display:flex;">${row.map((ch, c) => {
@@ -99,11 +107,31 @@ GameRegistry.register({
             步数: ${moves} | 推动: ${pushes} | 剩余箱子: ${remaining}
           </div>
           <div style="display:inline-block;border:2px solid var(--surface2);border-radius:8px;overflow:hidden;" id="sokoGrid">${html}</div>
-          <div style="margin-top:16px;color:var(--text-dim);font-size:0.85em;">
-            ↑↓←→ 或 WASD 移动 | R 重置
+          <div style="margin-top:16px;">
+            <div style="display:grid;grid-template-columns:60px 60px 60px;grid-template-rows:60px 60px 60px;gap:4px;justify-content:center;">
+              <div></div>
+              <button class="game-cell" id="btnUp" style="width:60px;height:60px;font-size:1.5em;">⬆</button>
+              <div></div>
+              <button class="game-cell" id="btnLeft" style="width:60px;height:60px;font-size:1.5em;">⬅</button>
+              <button class="game-cell" id="btnReset" style="width:60px;height:60px;font-size:0.8em;">🔄</button>
+              <button class="game-cell" id="btnRight" style="width:60px;height:60px;font-size:1.5em;">➡</button>
+              <div></div>
+              <button class="game-cell" id="btnDown" style="width:60px;height:60px;font-size:1.5em;">⬇</button>
+              <div></div>
+            </div>
+          </div>
+          <div style="margin-top:8px;color:var(--text-dim);font-size:0.8em;">
+            方向键 / WASD / 点击按钮
           </div>
         </div>
       `;
+
+      // D-pad buttons
+      document.getElementById('btnUp').onclick = () => move(-1, 0);
+      document.getElementById('btnDown').onclick = () => move(1, 0);
+      document.getElementById('btnLeft').onclick = () => move(0, -1);
+      document.getElementById('btnRight').onclick = () => move(0, 1);
+      document.getElementById('btnReset').onclick = () => { resetLevel(); render(); };
     }
 
     function move(dr, dc) {
@@ -111,16 +139,15 @@ GameRegistry.register({
       if (nr < 0 || nr >= grid.length || nc < 0 || nc >= grid[0].length) return;
 
       const cell = grid[nr][nc];
-
-      if (cell === '#' ) return;
+      if (cell === '#' || cell === ' ') return;
+      // ponytail: ' ' outside the play area — skip
 
       if (cell === '$' || cell === '*') {
         const br = nr + dr, bc = nc + dc;
         if (br < 0 || br >= grid.length || bc < 0 || bc >= grid[0].length) return;
         const bcell = grid[br][bc];
-        if (bcell === '#' || bcell === '$' || bcell === '*') return;
+        if (bcell === '#' || bcell === '$' || bcell === '*' || bcell === ' ') return;
 
-        // Push box
         grid[br][bc] = isTarget(br, bc) ? '*' : '$';
         grid[nr][nc] = isTarget(nr, nc) ? '+' : '@';
         grid[playerR][playerC] = isTarget(playerR, playerC) ? '.' : ' ';
@@ -132,10 +159,8 @@ GameRegistry.register({
 
       playerR = nr; playerC = nc;
       moves++;
-
       render();
 
-      // Check win: no more $
       if (!grid.flat().includes('$')) {
         setTimeout(() => onComplete({
           win: true, score: moves,
