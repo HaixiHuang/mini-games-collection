@@ -31,11 +31,13 @@ const Leaderboard = {
 
   add(gameId, difficulty, entry) {
     const list = this.get(gameId, difficulty);
-    list.push({ ...entry, date: new Date().toISOString().slice(0, 10) });
+    const stamp = Date.now();
+    list.push({ ...entry, date: new Date().toISOString().slice(0, 10), _ts: stamp });
     list.sort((a, b) => a.score - b.score || a.time - b.time);
     const trimmed = list.slice(0, this._maxEntries);
     localStorage.setItem(this._key(gameId, difficulty), JSON.stringify(trimmed));
-    return { list: trimmed, rank: trimmed.indexOf(entry) + 1 };
+    const rank = trimmed.findIndex(e => e._ts === stamp) + 1;
+    return { list: trimmed, rank };
   },
 
   getTop(gameId, difficulty, n = 10) {

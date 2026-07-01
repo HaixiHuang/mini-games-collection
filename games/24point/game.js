@@ -12,13 +12,10 @@ GameRegistry.register({
 
   init(container, difficulty, onComplete) {
     const range = difficulty === 'easy' ? 9 : 13;
-    let numbers;
+    let numbers, expr, solved = false;
 
     do { numbers = Array.from({ length: 4 }, () => randInt(1, range)); }
     while (!solve24(numbers).length);
-
-    let numbers, expr;
-    solved = false;
 
     render();
 
