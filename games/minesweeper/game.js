@@ -185,21 +185,21 @@ GameRegistry.register({
       `;
 
       // Click / touch handlers — 兼容 iPad
-      let touchMoved = false, touchStartRC = null;
       container.querySelectorAll('.sweep-cell').forEach(cell => {
         const r = +cell.dataset.r, c = +cell.dataset.c;
+        let touchMoved = false;
 
         cell.addEventListener('touchstart', (e) => {
           touchMoved = false;
-          touchStartRC = [r, c];
+          cell._touchStart = e.timeStamp;
         }, { passive: true });
 
         cell.addEventListener('touchmove', () => { touchMoved = true; });
 
         cell.addEventListener('touchend', (e) => {
-          e.preventDefault();
           if (touchMoved) return;
-          // 长按 > 600ms = 插旗标记
+          e.preventDefault();
+          cell._touchHandled = true; // 防双击
           if (e.timeStamp - cell._touchStart > 600) {
             toggleFlag(r, c);
           } else if (flagMode) {
@@ -209,16 +209,13 @@ GameRegistry.register({
           }
         });
 
-        cell.addEventListener('touchstart', (e) => { cell._touchStart = e.timeStamp; }, { passive: true });
-
-        // 桌面端点击
+        // 桌面端：click + 右键
         cell.addEventListener('click', (e) => {
-          if (e.pointerType === 'touch') return; // 触屏设备跳过 click（touchend 已处理）
+          if (cell._touchHandled) { cell._touchHandled = false; return; }
           if (flagMode) toggleFlag(r, c);
           else reveal(r, c);
         });
 
-        // 桌面端右键
         cell.addEventListener('contextmenu', (e) => { e.preventDefault(); toggleFlag(r, c); });
       });
 
